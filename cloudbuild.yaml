@@ -1,5 +1,4 @@
 steps:
-  # 1. Build l'image Docker
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "build"
@@ -9,14 +8,16 @@ steps:
       - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:latest"
       - "."
 
-  # 2. Push l'image vers Artifact Registry
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "push"
       - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:$BUILD_ID"
+
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
       - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:latest"
 
-  # 3. Déployer sur Cloud Run
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: gcloud
     args:
