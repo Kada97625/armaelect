@@ -10,6 +10,8 @@ email-validator
 markdown
 aiofiles
 python-multipart
+langchain
+langchain-openai
 pg8000
 pytest
 httpx
