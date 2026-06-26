@@ -4,7 +4,7 @@ steps:
     args:
       - "build"
       - "-t"
-      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:${SHORT_SHA}"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:$BUILD_ID"
       - "-t"
       - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:latest"
       - "."
@@ -13,7 +13,7 @@ steps:
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "push"
-      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:${SHORT_SHA}"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:$BUILD_ID"
       - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:latest"
 
   # 3. Déployer sur Cloud Run
@@ -24,7 +24,7 @@ steps:
       - "deploy"
       - "armaelect"
       - "--image"
-      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:${SHORT_SHA}"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:$BUILD_ID"
       - "--region"
       - "${_REGION}"
       - "--platform"
