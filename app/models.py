@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Float, JSON
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from app.database import Base
 import json
 
@@ -32,6 +33,8 @@ class Tenant(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    users = relationship("User", back_populates="tenant")
+
     @property
     def config(self):
         return json.loads(self.config_json) if self.config_json else {}
@@ -51,6 +54,8 @@ class User(Base):
     
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    tenant = relationship("Tenant", back_populates="users")
 
 # ============================================================
 # Modèle : Document (Devis ou Mémoire Généré)
