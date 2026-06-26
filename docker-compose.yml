@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  armaelect:
+    build: .
+    container_name: armaelect-app
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DATABASE_URL=sqlite:///./data/app.db
+      - JWT_SECRET=${JWT_SECRET:-changez-moi-en-production-secret-tres-long}
+      - ADMIN_PASSWORD_HASH=$2b$12$VEx9g6uZkZf6Xz6hK3yY.eu/05OhM/6XqDFX1YhbAt3T5VDvNz6Xe
+    volumes:
+      - ./data:/app/data
+      - ./generated_pdfs:/app/generated_pdfs
+    restart: unless-stopped

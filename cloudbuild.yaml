@@ -1,0 +1,55 @@
+steps:
+  # 1. Build l'image Docker
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:${SHORT_SHA}"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:latest"
+      - "."
+
+  # 2. Push l'image vers Artifact Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:${SHORT_SHA}"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:latest"
+
+  # 3. Déployer sur Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "armaelect"
+      - "--image"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/armaelect/app:${SHORT_SHA}"
+      - "--region"
+      - "${_REGION}"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--cpu"
+      - "1"
+      - "--memory"
+      - "512Mi"
+      - "--concurrency"
+      - "80"
+      - "--timeout"
+      - "60s"
+      - "--set-cloudsql-instances"
+      - "${_CLOUD_SQL_INSTANCE}"
+      - "--update-env-vars"
+      - "OPENAI_API_KEY=${_OPENAI_KEY},JWT_SECRET=${_JWT_SECRET},CLOUD_SQL_CONNECTION_NAME=${_CLOUD_SQL_INSTANCE},DB_USER=armaelect,DB_PASSWORD=${_DB_PASSWORD},DB_NAME=armaelect,DATABASE_URL="
+      - "--service-account"
+      - "armaelect-sa@$PROJECT_ID.iam.gserviceaccount.com"
+
+substitutions:
+  _REGION: europe-west1
+  _CLOUD_SQL_INSTANCE: ""
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 900s

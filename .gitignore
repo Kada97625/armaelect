@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+app.db
+generated_pdfs/
+.env
+.DS_Store
+*.egg-info/
+dist/
+build/
+.terraform/
+*.tfstate*

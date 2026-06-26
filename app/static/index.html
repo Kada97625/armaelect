@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARMAELECT - Plateforme de Génération IA</title>
+    <style>
+        :root {
+            --primary: #1a365d;
+            --secondary: #2c5282;
+            --accent: #3182ce;
+            --bg: #f7fafc;
+            --card-bg: #ffffff;
+            --text: #2d3748;
+            --text-light: #718096;
+            --border: #e2e8f0;
+            --error: #e53e3e;
+            --success: #38a169;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.5; }
+        .hidden { display: none !important; }
+        
+        /* Layout */
+        .app-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: var(--primary); color: white; padding: 20px 0; display: flex; flex-direction: column; transition: all 0.3s; }
+        .sidebar .brand { padding: 0 20px 20px; font-size: 1.5rem; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
+        .sidebar .nav-item { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.2s; text-decoration: none; color: rgba(255,255,255,0.8); }
+        .sidebar .nav-item:hover, .sidebar .nav-item.active { background: rgba(255,255,255,0.1); color: white; }
+        .sidebar .nav-item i { font-style: normal; font-size: 1.2rem; }
+        .sidebar .bottom { margin-top: auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; opacity: 0.7; }
+        
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 1.5rem; color: var(--primary); }
+        .header .user-pill { background: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        /* Cards */
+        .card { background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 24px; margin-bottom: 24px; }
+        .card-header { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--primary); display: flex; justify-content: space-between; align-items: center; }
+
+        /* Forms */
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: var(--text-light); }
+        input, textarea, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 1rem; transition: border-color 0.2s; }
+        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+        textarea { min-height: 120px; resize: vertical; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--secondary); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(44,82,130,0.2); }
+        .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--error); color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+
+        /* Login */
+        .login-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); }
+        .login-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 100%; max-width: 420px; }
+        .login-card h2 { text-align: center; color: var(--primary); margin-bottom: 24px; font-size: 1.75rem; }
+        .login-card .logo { text-align: center; font-size: 2.5rem; margin-bottom: 10px; }
+        .login-card input { margin-bottom: 16px; }
+        .login-card .btn { width: 100%; justify-content: center; padding: 12px; font-size: 1.1rem; }
+        .link { color: var(--accent); text-decoration: none; cursor: pointer; font-size: 0.9rem; }
+        .link:hover { text-decoration: underline; }
+        .toggle-mode { text-align: center; margin-top: 16px; font-size: 0.9rem; color: var(--text-light); }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--card-bg); padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-left: 4px solid var(--accent); }
+        .stat-value { font-size: 2rem; font-weight: 800; color: var(--primary); margin-top: 5px; }
+        .stat-label { font-size: 0.85rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; background: var(--bg); color: var(--text-light); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        tr:hover td { background: var(--bg); }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+        .badge-draft { background: #edf2f7; color: var(--text); }
+        .badge-sent { background: #c6f6d5; color: #22543d; }
+
+        /* Generator */
+        .generator-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px; }
+        .preview-frame { width: 100%; height: 700px; border: 1px solid var(--border); border-radius: 8px; background: white; }
+        
+        .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-weight: 500; }
+        .alert-error { background: #fed7d7; color: var(--error); border-left: 4px solid var(--error); }
+        .alert-success { background: #c6f6d5; color: #22543d; border-left: 4px solid #38a169; }
+
+        @media (max-width: 900px) {
+            .app-container { flex-direction: column; }
+            .sidebar { width: 100%; padding: 10px 0; }
+            .generator-layout { grid-template-columns: 1fr; }
+            .preview-frame { height: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==================== LOGIN VIEW ==================== -->
+<div id="view-login" class="login-wrapper">
+    <div class="login-card">
+        <div class="logo">⚡</div>
+        <h2 id="login-title">ARMAELECT</h2>
+        <div id="login-alert" class="alert hidden"></div>
+        
+        <div id="login-form">
+            <input type="email" id="in-email" placeholder="Adresse email">
+            <input type="password" id="in-password" placeholder="Mot de passe">
+            <button class="btn btn-primary" onclick="login()">Se connecter</button>
+        </div>
+
+        <div id="register-form" class="hidden">
+            <input type="text" id="reg-company" placeholder="Nom de l'entreprise">
+            <input type="text" id="reg-slug" placeholder="Identifiant (slug) - ex: ma-societe">
+            <input type="email" id="reg-email" placeholder="Email Administrateur">
+            <input type="password" id="reg-password" placeholder="Mot de passe">
+            <button class="btn btn-success" onclick="register()">Créer mon compte</button>
+        </div>
+
+        <div class="toggle-mode">
+            <span id="toggle-text">Pas encore de compte ?</span> <a class="link" onclick="toggleAuthMode()" id="toggle-link">Créer une entreprise</a>
+        </div>
+        
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); text-align: center;">
+            <a class="link" onclick="showMasterLogin()">Accès Revendeur</a>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MASTER ADMIN VIEW ==================== -->
+<div id="view-admin" class="hidden">
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="brand">⚡ ARMAELECT</div>
+            <div class="nav-item active" onclick="showAdminTab('stats')">📊 Tableau de Bord</div>
+            <div class="nav-item" onclick="showAdminTab('clients')">🏢 Gestion Clients</div>
+            <div class="nav-item" onclick="showAdminTab('create')">➕ Nouveau Client</div>
+            <div class="bottom">
+                <div>Connecté en tant que</div>
+                <div style="font-weight: 600;">Super Administrateur</div>
+                <button class="btn btn-sm btn-secondary" style="margin-top:10px; width:100%;" onclick="logout()">Déconnexion</button>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="header">
+                <h1 id="admin-header">Tableau de Bord Revendeur</h1>
+            </div>
+            <div id="admin-alert"></div>
+
+            <div id="tab-stats">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">Clients Actifs</div><div class="stat-value" id="a-stat-clients">0</div></div>
+                    <div class="stat-card"><div class="stat-label">Documents Générés</div><div class="stat-value" id="a-stat-docs">0</div></div>
+                    <div class="stat-card"><div class="stat-label">Utilisateurs</div><div class="stat-value" id="a-stat-users">0</div></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Utilisation par Client</div>
+                    <table>
+                        <thead><tr><th>Entreprise</th><th>Contact</th><th>Quota</th><th>Utilisé</th><th>Actions</th></tr></thead>
+                        <tbody id="a-clients-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-clients" class="hidden">
+                <div class="card">
+                    <div class="card-header">Liste des Clients</div>
+                    <table>
+                        <thead><tr><th>ID</th><th>Nom</th><th>Slug</th><th>Contact</th><th>Actif</th><th>Actions</th></tr></thead>
+                        <tbody id="a-all-clients-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-create" class="hidden">
+                <div class="card" style="max-width: 600px;">
+                    <div class="card-header">Créer un Nouveau Client</div>
+                    <div class="form-group"><label>Nom de l'Entreprise</label><input id="a-new-name"></div>
+                    <div class="form-group"><label>Identifiant (Slug)</label><input id="a-new-slug" placeholder="ex: electricite-dupont"></div>
+                    <div class="form-group"><label>Email Administrateur</label><input id="a-new-email" type="email"></div>
+                    <div class="form-group"><label>Mot de passe Admin</label><input id="a-new-pass" type="password"></div>
+                    <button class="btn btn-success" onclick="adminCreateTenant()">Créer le Client</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CLIENT DASHBOARD ==================== -->
+<div id="view-dashboard" class="hidden">
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="brand" id="client-brand">⚡ Mon Espace</div>
+            <div class="nav-item active" onclick="showClientTab('generator')">✨ Générateur</div>
+            <div class="nav-item" onclick="showClientTab('history')">📁 Mes Documents</div>
+            <div class="nav-item" onclick="showClientTab('settings')">⚙️ Paramètres</div>
+            <div class="bottom">
+                <div id="client-user-info"></div>
+                <button class="btn btn-sm btn-secondary" style="margin-top:10px; width:100%;" onclick="logout()">Déconnexion</button>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="header">
+                <h1 id="client-header">Générateur de Documents</h1>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <div class="user-pill" id="quota-pill">Quota: 0/0</div>
+                </div>
+            </div>
+            <div id="client-alert"></div>
+
+            <div id="c-tab-generator">
+                <div class="generator-layout">
+                    <div class="card">
+                        <div class="card-header">Paramètres du Document</div>
+                        <div class="form-group">
+                            <label>Type de Document</label>
+                            <select id="c-doc-type">
+                                <option value="quote">Devis Professionnel</option>
+                                <option value="technical_memo">Mémoire Technique</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Titre du Document</label><input id="c-title" placeholder="Ex: Devis - Rénovation Tableau Électrique"></div>
+                        <div class="form-group"><label>Informations Client / Maître d'Ouvrage</label><input id="c-client-info" placeholder="Nom, adresse, contact..."></div>
+                        <div class="form-group"><label>Description du Projet *</label><textarea id="c-description" placeholder="Décrivez le projet en détail..."></textarea></div>
+                        <div class="form-group"><label>Contexte Technique (Optionnel)</label><textarea id="c-context" placeholder="Normes, contraintes spécifiques..."></textarea></div>
+                        <button class="btn btn-primary" id="btn-generate" onclick="generateDocument()">Générer le Document</button>
+                        <div id="c-generate-loading" style="margin-top:10px; color: var(--text-light); font-style: italic; display: none;">Génération en cours via IA... ~15s</div>
+                    </div>
+                    <div>
+                        <div class="card-header">Prévisualisation</div>
+                        <iframe class="preview-frame" id="c-preview"></iframe>
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button class="btn btn-secondary btn-sm" onclick="downloadCurrentPDF()">⬇ Télécharger PDF</button>
+                            <button class="btn btn-secondary btn-sm" onclick="copyMarkdown()">📋 Copier Markdown</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="c-tab-history" class="hidden">
+                <div class="card">
+                    <div class="card-header">Historique des Documents</div>
+                    <table>
+                        <thead><tr><th>Date</th><th>Titre</th><th>Type</th><th>Statut</th><th>Actions</th></tr></thead>
+                        <tbody id="c-history-table"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="c-tab-settings" class="hidden">
+                <div class="card" style="max-width: 600px;">
+                    <div class="card-header">Paramètres de l'Entreprise</div>
+                    <div class="form-group"><label>Couleur Primaire (Header, Tableaux)</label><input type="color" id="c-setting-color"></div>
+                    <div class="form-group"><label>URL du Logo</label><input id="c-setting-logo" placeholder="https://..."></div>
+                    <button class="btn btn-primary" onclick="saveSettings()">Sauvegarder le Branding</button>
+                    <p style="margin-top:20px; font-size:0.85rem; color:var(--text-light);">Note: Le branding personnalisé sera appliqué à tous les documents PDF générés pour votre entreprise.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== STATE ====================
+const API_URL = ''; // Relative
+let authToken = localStorage.getItem('token');
+let currentUser = null;
+let masterPassword = null;
+let currentDocId = null;
+let currentMarkdown = "";
+
+// ==================== UTILS ====================
+function $(id) { return document.getElementById(id); }
+function show(id) { $(id).classList.remove('hidden'); }
+function hide(id) { $(id).classList.add('hidden'); }
+function alertBox(elId, msg, isError=true) {
+    const el = $(elId);
+    el.textContent = msg;
+    el.className = `alert ${isError ? 'alert-error' : 'alert-success'}`;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+function switchView(viewName) {
+    ['view-login', 'view-admin', 'view-dashboard'].forEach(v => hide(v));
+    show('view-' + viewName);
+}
+
+// ==================== AUTH ====================
+let authMode = 'login'; // or 'register'
+function toggleAuthMode() {
+    authMode = authMode === 'login' ? 'register' : 'login';
+    if (authMode === 'login') {
+        show('login-form'); hide('register-form');
+        $('toggle-text').textContent = "Pas encore de compte ?";
+        $('toggle-link').textContent = "Créer une entreprise";
+    } else {
+        hide('login-form'); show('register-form');
+        $('toggle-text').textContent = "Vous avez déjà un compte ?";
+        $('toggle-link').textContent = "Se connecter";
+    }
+}
+
+async function login() {
+    const email = $('in-email').value;
+    const pass = $('in-password').value;
+    try {
+        const res = await fetch('/auth/login', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email, password: pass})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Erreur');
+        
+        authToken = data.access_token;
+        localStorage.setItem('token', authToken);
+        
+        if (data.role === 'admin' && email === 'admin') {
+            // C'est le super admin si on force un check, mais pour simplifier on parse le JWT
+        }
+        
+        initSession();
+    } catch (e) { alertBox('login-alert', e.message); }
+}
+
+async function register() {
+    const company = $('reg-company').value;
+    const slug = $('reg-slug').value;
+    const email = $('reg-email').value;
+    const pass = $('reg-password').value;
+    try {
+        const res = await fetch('/auth/register', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({tenant_name: company, slug, admin_email: email, admin_password: pass})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Erreur');
+        authToken = data.access_token;
+        localStorage.setItem('token', authToken);
+        initSession();
+    } catch (e) { alertBox('login-alert', e.message); }
+}
+
+function showMasterLogin() {
+    const pw = prompt("Entrez le mot de passe Revendeur Maître :");
+    if (pw) {
+        masterPassword = pw;
+        initAdmin();
+    }
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    authToken = null;
+    currentUser = null;
+    masterPassword = null;
+    location.reload();
+}
+
+// ==================== ADMIN ====================
+async function initAdmin() {
+    if (!masterPassword) { switchView('login'); return; }
+    switchView('admin');
+    await loadAdminStats();
+}
+
+async function loadAdminStats() {
+    try {
+        const res = await fetch(`/api/admin/stats?master_password=${encodeURIComponent(masterPassword)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+        
+        let totalDocs = 0, totalUsers = 0;
+        const tbody = document.createElement('tbody');
+        const allTbody = document.createElement('tbody');
+        
+        data.forEach(t => {
+            totalDocs += t.total_docs;
+            totalUsers += t.total_users;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${t.name}</td><td>${t.contact_email}</td><td>${t.quota}</td><td>${t.usage}</td>
+                <td><button class="btn btn-sm btn-secondary" onclick="editQuota(${t.id}, ${t.quota})">Modifier Quota</button></td>`;
+            tbody.appendChild(tr);
+            
+            const tr2 = document.createElement('tr');
+            tr2.innerHTML = `<td>${t.id}</td><td>${t.name}</td><td>${t.slug}</td><td>${t.contact_email}</td><td>${t.is_active ? 'Oui' : 'Non'}</td>
+                <td><button class="btn btn-sm ${t.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleTenant(${t.id})">${t.is_active ? 'Suspendre' : 'Activer'}</button></td>`;
+            allTbody.appendChild(tr2);
+        });
+        
+        $('a-stat-clients').textContent = data.length;
+        $('a-stat-docs').textContent = totalDocs;
+        $('a-stat-users').textContent = totalUsers;
+        
+        $('a-clients-table').innerHTML = tbody.innerHTML;
+        $('a-all-clients-table').innerHTML = allTbody.innerHTML;
+    } catch (e) { alertBox('admin-alert', e.message); }
+}
+
+function showAdminTab(tab) {
+    ['stats', 'clients', 'create'].forEach(t => {
+        hide('tab-' + t);
+        document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
+    });
+    show('tab-' + tab);
+    // Mettre à jour l'active state
+    const map = {'stats':0, 'clients':1, 'create':2};
+    document.querySelectorAll('.sidebar .nav-item')[map[tab]].classList.add('active');
+    $('admin-header').textContent = tab === 'stats' ? 'Tableau de Bord Revendeur' : (tab==='clients' ? 'Gestion des Clients' : 'Nouveau Client');
+}
+
+async function adminCreateTenant() {
+    const payload = {
+        tenant_name: $('a-new-name').value,
+        slug: $('a-new-slug').value,
+        admin_email: $('a-new-email').value,
+        admin_password: $('a-new-pass').value,
+        master_password: masterPassword
+    };
+    try {
+        const res = await fetch('/api/admin/tenants/create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+        alertBox('admin-alert', "Client créé avec succès !", false);
+        $('a-new-name').value = ''; $('a-new-slug').value = ''; $('a-new-email').value = ''; $('a-new-pass').value = '';
+        loadAdminStats();
+    } catch(e) { alertBox('admin-alert', e.message); }
+}
+
+async function editQuota(tenantId, current) {
+    const newQ = prompt("Nouveau quota mensuel (0 = illimité):", current);
+    if (newQ === null) return;
+    try {
+        const res = await fetch(`/api/admin/tenants/${tenantId}/quota?master_password=${encodeURIComponent(masterPassword)}`, {
+            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({quota: parseInt(newQ)})
+        });
+        if (!res.ok) throw new Error((await res.json()).detail);
+        loadAdminStats();
+    } catch(e) { alertBox('admin-alert', e.message); }
+}
+
+async function toggleTenant(tenantId) {
+    try {
+        const res = await fetch(`/api/admin/tenants/${tenantId}/toggle?master_password=${encodeURIComponent(masterPassword)}`, {method: 'POST'});
+        if (!res.ok) throw new Error((await res.json()).detail);
+        loadAdminStats();
+    } catch(e) { alertBox('admin-alert', e.message); }
+}
+
+// ==================== CLIENT DASHBOARD ====================
+async function initSession() {
+    if (!authToken) { switchView('login'); return; }
+    
+    // Decode token basique pour infos
+    try {
+        const payload = JSON.parse(atob(authToken.split('.')[1]));
+        // On ne fait pas confiance au client, mais c'est pour l'UI
+        currentUser = payload;
+        
+        if (payload.role === 'admin' && payload.sub === 'admin') {
+             // Si c'est le super admin, il verra un lien dans la sidebar. Pour simplifier, on l'envoie vers le dashboard client classique.
+             // Dans une vraie app, on détecterait le master_password stocké. On l'enverra plutôt vers admin si masterPassword est set.
+        }
+        
+        switchView('dashboard');
+        $('client-user-info').innerHTML = `<div>${payload.sub}</div><div style="font-size:0.8rem; opacity:0.7;">${payload.role}</div>`;
+        loadHistory();
+    } catch(e) { console.error(e); logout(); }
+}
+
+function showClientTab(tab) {
+    ['generator', 'history', 'settings'].forEach(t => hide('c-tab-' + t));
+    show('c-tab-' + tab);
+    // Update sidebar active
+    document.querySelectorAll('#view-dashboard .sidebar .nav-item').forEach(el => el.classList.remove('active'));
+    const map = {'generator':0, 'history':1, 'settings':2};
+    document.querySelectorAll('#view-dashboard .sidebar .nav-item')[map[tab]].classList.add('active');
+    $('client-header').textContent = tab === 'generator' ? 'Générateur de Documents' : (tab==='history' ? 'Mes Documents' : 'Paramètres');
+    if (tab === 'history') loadHistory();
+}
+
+async function generateDocument() {
+    const type = $('c-doc-type').value;
+    const title = $('c-title').value;
+    const client = $('c-client-info').value;
+    const desc = $('c-description').value;
+    const context = $('c-context').value;
+    
+    if (!desc || !title) { alertBox('client-alert', "Veuillez remplir le titre et la description."); return; }
+    
+    $('btn-generate').disabled = true;
+    show('c-generate-loading');
+    
+    try {
+        const res = await fetch('/api/documents/generate', {
+            method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`},
+            body: JSON.stringify({document_type: type, title, project_description: desc, client_info: client, extra_context: context})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Erreur serveur');
+        
+        currentDocId = data.id;
+        // Récupérer le HTML pour prévisualisation
+        const htmlRes = await fetch(`/api/documents/${data.id}/html`, {headers: {'Authorization': `Bearer ${authToken}`}});
+        const htmlData = await htmlRes.json();
+        
+        $('c-preview').srcdoc = htmlData.html;
+        currentMarkdown = htmlData.markdown;
+        alertBox('client-alert', "Document généré avec succès !", false);
+        loadHistory();
+    } catch(e) { alertBox('client-alert', e.message); }
+    finally { $('btn-generate').disabled = false; hide('c-generate-loading'); }
+}
+
+async function loadHistory() {
+    try {
+        const res = await fetch('/api/documents/list', {headers: {'Authorization': `Bearer ${authToken}`}});
+        const data = await res.json();
+        const tbody = document.createElement('tbody');
+        data.forEach(doc => {
+            const tr = document.createElement('tr');
+            const date = new Date(doc.created_at).toLocaleDateString('fr-FR');
+            const typeLabel = doc.document_type === 'quote' ? 'Devis' : 'Mémoire Technique';
+            const badgeClass = doc.status === 'sent' ? 'badge-sent' : 'badge-draft';
+            tr.innerHTML = `<td>${date}</td><td>${doc.title}</td><td>${typeLabel}</td><td><span class="badge ${badgeClass}">${doc.status.toUpperCase()}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-secondary" onclick="viewDoc(${doc.id})">Voir</button>
+                    <button class="btn btn-sm btn-secondary" onclick="downloadDocPDF(${doc.id})">PDF</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteDoc(${doc.id})">🗑</button>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+        $('c-history-table').innerHTML = tbody.innerHTML;
+    } catch(e) { console.error(e); }
+}
+
+async function viewDoc(id) {
+    try {
+        const res = await fetch(`/api/documents/${id}/html`, {headers: {'Authorization': `Bearer ${authToken}`}});
+        const data = await res.json();
+        $('c-preview').srcdoc = data.html;
+        currentMarkdown = data.markdown;
+        currentDocId = id;
+        showClientTab('generator');
+    } catch(e) { alertBox('client-alert', e.message); }
+}
+
+function downloadCurrentPDF() {
+    if (!currentDocId) { alertBox('client-alert', "Aucun document à télécharger."); return; }
+    downloadDocPDF(currentDocId);
+}
+
+function downloadDocPDF(id) {
+    window.open(`/api/documents/${id}/pdf?token=${authToken}`, '_blank');
+}
+
+function copyMarkdown() {
+    if (!currentMarkdown) return;
+    navigator.clipboard.writeText(currentMarkdown).then(() => alertBox('client-alert', "Markdown copié !", false));
+}
+
+async function deleteDoc(id) {
+    if (!confirm("Supprimer ce document ?")) return;
+    try {
+        const res = await fetch(`/api/documents/${id}`, {method: 'DELETE', headers: {'Authorization': `Bearer ${authToken}`}});
+        if (!res.ok) throw new Error('Erreur');
+        loadHistory();
+    } catch(e) { alertBox('client-alert', e.message); }
+}
+
+function saveSettings() {
+    // Simuler une sauvegarde locale pour le branding
+    localStorage.setItem('brand_color', $('c-setting-color').value);
+    localStorage.setItem('brand_logo', $('c-setting-logo').value);
+    alertBox('client-alert', "Paramètres sauvegardés (Mock local pour cette démo)", false);
+}
+
+// ==================== INIT ====================
+if (authToken) initSession();
+else switchView('login');
+</script>
+</body>
+</html>
